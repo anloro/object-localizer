@@ -27,9 +27,17 @@ class ObjectDetector:
 
         # Create and use the mask
         mask = cv.inRange(frame_hsv, pure_white_hsv, pale_gray_hsv)
+        # Get rid off noise
+        kernel = np.ones((5, 5), np.uint8)
+        mask = cv.erode(mask, kernel, iterations=2)
+        mask = cv.dilate(mask, kernel, iterations=2)
+
+        # Apply the mask
         frame_masked_hsv = cv.bitwise_and(frame_hsv, frame_hsv, mask=mask)
         # Return to BGR format
         frame_result = cv.cvtColor(frame_masked_hsv, cv.COLOR_HSV2BGR)
+        # cv.imshow("frame_result", frame_result)
+        # cv.waitKey(0)
 
         return frame_result
 
@@ -49,7 +57,10 @@ class ObjectDetector:
         frame_gray = cv.cvtColor(processed_frame, cv.COLOR_BGR2GRAY)
         contours, _ = cv.findContours(frame_gray, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
-        self.draw_bounding_box(contours, frame)
+        # Process the contours
+        squares = self.approximate_squares(contours)
+
+        self.draw_bounding_box(squares, frame)
 
     def draw_bounding_box(self, positions, frame):
         """Sets the bounding box of the detected object.
@@ -62,8 +73,21 @@ class ObjectDetector:
             - frame_boxed (np.array): image with the bounding box.
         """
 
-        frame_boxed = cv.drawContours(frame, positions, 0, (0, 255, 0), 3)
+        frame_boxed = cv.drawContours(frame, positions, -1, (0, 255, 0), 3)
         cv.imshow("frame_boxed", frame_boxed)
         cv.waitKey(0)
 
         return frame_boxed
+
+    def approximate_squares(self, contours):
+        squares = list()
+        for contour in contours:
+            arc_length = cv.arcLength(contour, True)
+            print(arc_length)
+            area = cv.contourArea(contour)
+            print(area)
+            approx = cv.approxPolyDP(contour, 0.04 * arc_length, True)
+            if len(approx) == 4:
+                squares.append(approx)
+        
+        return squares

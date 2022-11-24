@@ -20,7 +20,7 @@ class Aircraft:
         return self.transform_matrix
 
     def get_next_frame(self):
-        frame = cv.imread('assets/cuadrado_blanco.jpg')
+        frame = cv.imread('assets/wsfa_2.png')
         # frame = cv.imread('assets/white_square.png')
 
         return frame
