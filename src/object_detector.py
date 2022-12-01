@@ -29,8 +29,8 @@ class ObjectDetector:
         mask = cv.inRange(frame_hsv, pure_white_hsv, pale_gray_hsv)
         # Get rid off noise
         kernel = np.ones((5, 5), np.uint8)
-        mask = cv.erode(mask, kernel, iterations=1)
-        mask = cv.dilate(mask, kernel, iterations=1)
+        mask = cv.erode(mask, kernel, iterations=5)
+        mask = cv.dilate(mask, kernel, iterations=5)
 
         # Apply the mask
         frame_masked_hsv = cv.bitwise_and(frame_hsv, frame_hsv, mask=mask)
@@ -40,7 +40,7 @@ class ObjectDetector:
         # cv.waitKey(0)
 
         return frame_result
-        
+
 
     def detect_object(self):
         """Routine that gets a frame, preprocesses it
