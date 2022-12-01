@@ -3,10 +3,11 @@ import cv2 as cv
 class Aircraft:
     """Contains the transform matrices and sensor data."""
 
-    def __init__(self):
+    def __init__(self, image):
         """Initialize calibration matrix or any data we need."""
         self.camera_calibration_matrix = []
         self.transform_matrix = []
+        self.image = image
         pass
 
     def get_calibration_matrix(self):
@@ -20,7 +21,7 @@ class Aircraft:
         return self.transform_matrix
 
     def get_next_frame(self):
-        frame = cv.imread('assets/wsfa_2.png')
+        frame = cv.imread(self.image)
         # frame = cv.imread('assets/white_square.png')
 
         return frame
