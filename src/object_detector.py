@@ -40,6 +40,7 @@ class ObjectDetector:
         # cv.waitKey(0)
 
         return frame_result
+        
 
     def detect_object(self):
         """Routine that gets a frame, preprocesses it
