@@ -23,5 +23,5 @@ class Aircraft:
     def get_next_frame(self):
         frame = cv.imread(self.image)
         # frame = cv.imread('assets/white_square.png')
-
+        frame = cv.resize(frame, (800, 800))
         return frame

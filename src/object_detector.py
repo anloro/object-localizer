@@ -22,15 +22,15 @@ class ObjectDetector:
         # Convert BGR to HSV
         frame_hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
         # Threshold of white in HSV space
-        pure_white_hsv = np.array([0, 0, 210])
-        pale_gray_hsv = np.array([255, 15, 255])
+        pure_white_hsv = np.array([0, 0, 150])
+        pale_gray_hsv = np.array([255, 30, 255])
 
         # Create and use the mask
         mask = cv.inRange(frame_hsv, pure_white_hsv, pale_gray_hsv)
         # Get rid off noise
         kernel = np.ones((5, 5), np.uint8)
-        mask = cv.erode(mask, kernel, iterations=2)
-        mask = cv.dilate(mask, kernel, iterations=2)
+        mask = cv.erode(mask, kernel, iterations=1)
+        mask = cv.dilate(mask, kernel, iterations=1)
 
         # Apply the mask
         frame_masked_hsv = cv.bitwise_and(frame_hsv, frame_hsv, mask=mask)
