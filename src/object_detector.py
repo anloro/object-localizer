@@ -36,12 +36,12 @@ class ObjectDetector:
         frame_masked_hsv = cv.bitwise_and(frame_hsv, frame_hsv, mask=mask)
         # Return to BGR format
         frame_result = cv.cvtColor(frame_masked_hsv, cv.COLOR_HSV2BGR)
-        # cv.imshow("frame_result", frame_result)
-        # cv.waitKey(0)
+        cv.imshow("frame_result", frame_result)
+        cv.waitKey(0)
 
         return frame_result
 
-    def detect_object(self):
+    def detect_object(self, frame):
         """Routine that gets a frame, preprocesses it
         detects the contours and plots them.
 
@@ -50,7 +50,6 @@ class ObjectDetector:
         output:
             -
         """
-        frame = self.aircraft.get_next_frame()
         processed_frame = self.preprocess_image(frame)
 
         # Change frame to gray for the findContours algorithm
@@ -88,7 +87,6 @@ class ObjectDetector:
         squares = list()
         for contour in contours:
             arc_length = cv.arcLength(contour, True)
-            print(arc_length)
             approx = cv.approxPolyDP(contour, 0.04 * arc_length, True)
             if len(approx) == 4:
                 squares.append(approx)
