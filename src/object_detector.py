@@ -83,7 +83,7 @@ class ObjectDetector:
         squares = list()
         for contour in contours:
             arc_length = cv.arcLength(contour, True)
-            #print(arc_length)
+            #sprint(arc_length)
             #area = cv.contourArea(contour)
             #print(area)
             approx = cv.approxPolyDP(contour, 0.04 * arc_length, True)
