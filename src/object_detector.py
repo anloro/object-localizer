@@ -1,6 +1,6 @@
 import cv2 as cv
 import numpy as np
-
+import matplotlib.pyplot as plt
 
 class ObjectDetector:
     """Algorithms used for the object detection."""
@@ -19,9 +19,23 @@ class ObjectDetector:
             - frame_result (np.array): Preprocessed image.
         """
 
-        frame_result = self.white_filter(frame)
-        cv.imshow("frame_result", frame_result)
-        cv.waitKey(0)
+        white_mask = self.white_filter(frame)
+        white_mask = cv.cvtColor(white_mask, cv.COLOR_BGR2GRAY)
+        kernel = np.ones((5, 5), np.uint8)
+        white_mask = cv.dilate(white_mask, kernel, iterations=2)
+    
+        edge_mask = self.edge_filter(frame)
+
+        frame_result = cv.bitwise_and(edge_mask, edge_mask, mask=white_mask)
+
+        f, axarr = plt.subplots(1,3, figsize=(16,8))
+        axarr[0].imshow(white_mask)
+        axarr[1].imshow(edge_mask)
+        axarr[2].imshow(frame_result)
+        plt.show() 
+
+        # cv.imshow("frame_result", frame_result)
+        # cv.waitKey(0)
 
         return frame_result
 
@@ -37,8 +51,7 @@ class ObjectDetector:
         processed_frame = self.preprocess_image(frame)
 
         # Change frame to gray for the findContours algorithm
-        frame_gray = cv.cvtColor(processed_frame, cv.COLOR_BGR2GRAY)
-        contours, _ = cv.findContours(frame_gray, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
+        contours, _ = cv.findContours(processed_frame, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
 
         # Process the contours
         squares = self.approximate_squares(contours)
@@ -73,8 +86,8 @@ class ObjectDetector:
         # Convert BGR to HSV
         frame_hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
         # Threshold of white in HSV space
-        pure_white_hsv = np.array([0, 0, 210])
-        pale_gray_hsv = np.array([255, 15, 255])
+        pure_white_hsv = np.array([0, 0, 80])
+        pale_gray_hsv = np.array([255, 60, 255])
 
         # Create and use the mask
         mask = cv.inRange(frame_hsv, pure_white_hsv, pale_gray_hsv)
@@ -89,6 +102,16 @@ class ObjectDetector:
         frame_result = cv.cvtColor(frame_masked_hsv, cv.COLOR_HSV2BGR)
 
         return frame_result
+
+    def edge_filter(self, img):
+        """Use a edge filter to preprocess the image and enhance contour detection."""
+        gausBlur = cv.GaussianBlur(img, (5,5),0)
+        filtered_image = cv.Canny(gausBlur, 100, 200)
+
+        kernel = np.ones((5, 5), np.uint8)
+        filtered_image = cv.dilate(filtered_image, kernel, iterations=1)
+
+        return filtered_image
 
     def approximate_squares(self, contours):
         """
