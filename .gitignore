@@ -8,3 +8,5 @@ lector.py
 baseddades
 .friend.txt
 images_dataset
+lector_image_function.py
+filtro_mc_function.py
