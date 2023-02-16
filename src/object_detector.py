@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 class ObjectDetector:
     """Algorithms used for the object detection."""
 
@@ -18,24 +19,36 @@ class ObjectDetector:
         output:
             - frame_result (np.array): Preprocessed image.
         """
-
+        #Set the white mask
         white_mask = self.white_filter(frame)
         white_mask = cv.cvtColor(white_mask, cv.COLOR_BGR2GRAY)
+        
         kernel = np.ones((5, 5), np.uint8)
         white_mask = cv.dilate(white_mask, kernel, iterations=2)
-    
-        edge_mask = self.edge_filter(frame)
+        
+        #Set the threshold 
+        thresh = self.threshold(frame)
 
-        frame_result = cv.bitwise_and(edge_mask, edge_mask, mask=white_mask)
+        #Join both methods 
+        thresh_mask = cv.bitwise_and(thresh, thresh, mask=white_mask)    
+        
+        kernel_dilate= np.ones((5, 5), np.uint8)
+        filtered_image = cv.dilate(thresh_mask, kernel_dilate, iterations=2)
 
-        f, axarr = plt.subplots(1,3, figsize=(16,8))
+        kernel_erode= np.ones((3, 3), np.uint8)
+        filtered_image = cv.erode(filtered_image, kernel_erode, iterations=1)
+        
+        #Take the edge 
+        frame_result = self.edge_filter(filtered_image)
+
+        
+        f, axarr = plt.subplots(1,3, figsize=(50,25))
         axarr[0].imshow(white_mask)
-        axarr[1].imshow(edge_mask)
+        axarr[1].imshow(thresh)
         axarr[2].imshow(frame_result)
-        plt.show() 
+        plt.waitforbuttonpress(0)
+        plt.close()
 
-        # cv.imshow("frame_result", frame_result)
-        # cv.waitKey(0)
 
         return frame_result
 
@@ -50,13 +63,23 @@ class ObjectDetector:
         """
         processed_frame = self.preprocess_image(frame)
 
+     
         # Change frame to gray for the findContours algorithm
         contours, _ = cv.findContours(processed_frame, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-
+        
         # Process the contours
         squares = self.approximate_squares(contours)
 
+        # Set the centroide of the contours
+        for i in squares:
+            M = cv.moments(i)
+            if M['m00'] != 0:
+                cx = int(M['m10']/M['m00'])
+                cy = int(M['m01']/M['m00'])
+                cv.circle(frame, (cx, cy), 2, (0, 0, 255), -1) 
+
         self.draw_bounding_box(squares, frame)
+        
 
     def draw_bounding_box(self, positions, frame):
         """Sets the bounding box of the detected object.
@@ -69,7 +92,7 @@ class ObjectDetector:
             - frame_boxed (np.array): image with the bounding box.
         """
 
-        frame_boxed = cv.drawContours(frame, positions, -1, (0, 255, 0), 3)
+        frame_boxed = cv.drawContours(frame, positions, -1, (0, 255, 0), 2)
         cv.imshow("frame_boxed", frame_boxed)
         cv.waitKey(0)
 
@@ -86,8 +109,8 @@ class ObjectDetector:
         # Convert BGR to HSV
         frame_hsv = cv.cvtColor(frame, cv.COLOR_BGR2HSV)
         # Threshold of white in HSV space
-        pure_white_hsv = np.array([0, 0, 80])
-        pale_gray_hsv = np.array([255, 60, 255])
+        pure_white_hsv = np.array([0, 0, 0])
+        pale_gray_hsv = np.array([360, 60, 255])
 
         # Create and use the mask
         mask = cv.inRange(frame_hsv, pure_white_hsv, pale_gray_hsv)
@@ -103,15 +126,35 @@ class ObjectDetector:
 
         return frame_result
 
-    def edge_filter(self, img):
-        """Use a edge filter to preprocess the image and enhance contour detection."""
-        gausBlur = cv.GaussianBlur(img, (5,5),0)
-        filtered_image = cv.Canny(gausBlur, 100, 200)
+    def threshold(self, frame):
+        """Create a threshold filter using its own function.
+        input:
+            - frame: Input image
+        output:
+            - frame_result: Filtered image.
+        """
+        # Convert BGR to HSV
+        imgray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        blur = cv.GaussianBlur(imgray,(5,5),0)
+        _, frame_threshold = cv.threshold(blur, 200 ,255,cv.THRESH_BINARY)
+        frame_result = cv.cvtColor(frame_threshold, cv.COLOR_GRAY2BGR)
 
-        kernel = np.ones((5, 5), np.uint8)
-        filtered_image = cv.dilate(filtered_image, kernel, iterations=1)
+        return frame_result
+
+
+    def edge_filter(self, frame):
+        """Use a edge filter to preprocess the image and enhance contour detection."""
+        gausBlur = cv.GaussianBlur(frame, (5,5),0)
+        filtered_image = cv.Canny(gausBlur, 0, 200)
+
+        kernel_dil= np.ones((5, 5), np.uint8)
+        filtered_image = cv.dilate(filtered_image, kernel_dil, iterations=1)
+        kernel_er= np.ones((3, 3), np.uint8)
+        filtered_image = cv.erode(filtered_image, kernel_er, iterations=1)
+        
 
         return filtered_image
+
 
     def approximate_squares(self, contours):
         """
